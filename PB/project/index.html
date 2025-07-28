@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pandit AI Assistant</title>
+  <style>
+    body { font-family: sans-serif; max-width: 700px; margin: auto; padding: 1rem; }
+    input, textarea, button { margin: 0.5rem 0; width: 100%; padding: 0.5rem; }
+    #chatbox { border: 1px solid #ccc; padding: 1rem; height: 300px; overflow-y: scroll; background: #f9f9f9; }
+    .bot { background: #e0f7fa; padding: 0.5rem; margin: 0.5rem 0; border-left: 4px solid #00796b; }
+    .user { background: #fff9c4; padding: 0.5rem; margin: 0.5rem 0; border-left: 4px solid #fbc02d; }
+    img { max-width: 100%; margin: 1rem 0; }
+  </style>
+</head>
+<body>
+
+  <h2>🧘‍♂️ Pandit AI Assistant</h2>
+
+  <label>User ID</label>
+  <input type="text" id="userId" placeholder="Enter your userId (e.g. user3)" />
+
+  <hr/>
+
+  <h3>🔮 Palmistry Upload</h3>
+  <input type="file" id="palmFile" />
+  <button onclick="uploadPalm()">Upload Palm Image</button>
+  <div id="palmResult"></div>
+
+  <hr/>
+
+  <h3>🤖 Ask the Chatbot</h3>
+  <textarea id="userQuery" placeholder="Ask anything about pandits, bookings, palmistry..."></textarea>
+  <button onclick="askChat()">Ask</button>
+
+  <div id="chatbox"></div>
+
+  <script>
+    async function uploadPalm() {
+      const userId = document.getElementById("userId").value;
+      const fileInput = document.getElementById("palmFile");
+
+      if (!userId || fileInput.files.length === 0) {
+        alert("Please provide both userId and an image.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("userId", userId);
+      formData.append("file", fileInput.files[0]);
+
+      const res = await fetch("/palmistry/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      document.getElementById("palmResult").innerHTML = `
+        <p><b>Message:</b> ${data.message}</p>
+        <p><b>Result:</b> ${data.result}</p>
+        ${data.image_path ? `<img src="${data.image_path}" alt="Palm Image" />` : ""}
+      `;
+    }
+
+    async function askChat() {
+      const userId = document.getElementById("userId").value;
+      const query = document.getElementById("userQuery").value;
+
+      if (!userId || !query) {
+        alert("Please enter both userId and your query.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("userId", userId);
+      formData.append("query", query);
+
+      const res = await fetch("/chat", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+
+      const chatbox = document.getElementById("chatbox");
+      chatbox.innerHTML += `<div class="user"><strong>You:</strong> ${query}</div>`;
+      chatbox.innerHTML += `<div class="bot"><strong>Bot:</strong> ${data.response}</div>`;
+      chatbox.scrollTop = chatbox.scrollHeight;
+
+      document.getElementById("userQuery").value = "";
+    }
+  </script>
+
+</body>
+</html>
